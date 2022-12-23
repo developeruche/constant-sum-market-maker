@@ -72,8 +72,18 @@ contract ConstantSumMarketMaker {
         _update(token0.balanceOf(address(this)), token1.balanceOf(address(this)));
     }
 
-    function removeLiquidity() external {
+    function removeLiquidity(uint256 _shares) external returns(uint256 amount0Out_, uint256 amount1Out_) {
+        // Calcuating token to be sent on a given amount of shares 
+        amount0Out_ = (reserve0 * _shares) / totalSupply;
+        amount1Out_ = (reserve1 * _shares) / totalSupply;
 
+        // Burning share before transfering tokens 
+        _burn(msg.sender, _shares);
+        _update(reserve0 - amount0Out_, reserve1 - amount1Out_);
+
+        // Transfering tokens
+        token0.transfer(msg.sender, amount0Out_);
+        token1.transfer(msg.sender, amount1Out_);
     }
 
 
