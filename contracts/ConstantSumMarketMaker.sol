@@ -58,7 +58,18 @@ contract ConstantSumMarketMaker {
         token0.transferFrom(msg.sender, address(this), _amount0);
         token1.transferFrom(msg.sender, address(this), _amount1);
 
-        
+
+        // Calculation shares [LP to be sent to liquidity provider]
+        if(totalSupply == 0) {
+            shares_ = _amount0 + _amount1;
+        } else {
+            shares_ = ((_amount0 + _amount1) * totalSupply) / (reserve0 + reserve1);
+        }
+
+        require(shares_ > 0, "no liquidity was added");
+
+        _mint(msg.sender, shares_);
+        _update(token0.balanceOf(address(this)), token1.balanceOf(address(this)));
     }
 
     function removeLiquidity() external {
