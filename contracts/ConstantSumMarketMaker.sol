@@ -16,6 +16,9 @@ contract ConstantSumMarketMaker {
     mapping(address => uint256) public balanceOf;
 
 
+    event Swap(address _tokenIn, uint256 _amountIn, uint256 _amountOut);
+
+
     constructor(IERC20 _token0, IERC20 _token1) {
         token0 = _token0;
         token1 = _token1;
@@ -25,12 +28,12 @@ contract ConstantSumMarketMaker {
     function swap(address _tokenIn, uint256 _amountIn) external returns(uint256 amountOut_) {
         require(_tokenIn == address(token0) || _tokenIn == address(token1), "Invalid _tokenIn");
 
+        bool is_token_0 = _tokenIn == address(token0);
+        (IERC20 tokenIn, IERC20 tokenOut) = is_token_0 ? (token0, token1) : (token1, token0);
+
         // Tranfer _token into this contract
-        if(_tokenIn == address(token0)) {
-            token0.transferFrom(msg.sender, address(this), _amountIn);
-        } else {
-            token1.transferFrom(msg.sender, address(this), _amountIn);
-        }
+        tokenIn.transferFrom(msg.sender, address(this), _amountIn);
+
 
         // Calculate amout out including  [0.2%]
         amountOut_ = (_amountIn * 998) / 100;
@@ -44,15 +47,18 @@ contract ConstantSumMarketMaker {
         }
 
         // tranfer token out
-        if(_tokenIn == address(token0)) {
-            token1.transfer(msg.sender, amountOut_);
-        } else {
-            token1.transfer(msg.sender, amountOut_);
-        }
+        tokenOut.transfer(msg.sender, amountOut_);
+
+
+        emit Swap(address(tokenIn), _amountIn, amountOut_);
     }
 
-    function addLiquidity() external {
+    function addLiquidity(uint256 _amount0, uint256 _amount1) external returns(uint256 shares_) {
+        // Tranfering tokens into the pool
+        token0.transferFrom(msg.sender, address(this), _amount0);
+        token1.transferFrom(msg.sender, address(this), _amount1);
 
+        
     }
 
     function removeLiquidity() external {
